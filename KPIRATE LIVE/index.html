@@ -1902,16 +1902,26 @@ body.theme-command::before{background:var(--bg)}
   // the Command Center's own Daily Ops Review view) renders, and again on manual refresh. Results
   // land in the same data/stamps/errors objects as everything else, keyed 'dor:<tab key>', so
   // opsTable() reads them exactly like any other live-wired section once they arrive.
-  var opsLoading = false, opsLoaded = false;
+  var opsLoading = false, opsLoaded = false, opsLoadedAt = 0;
+  // OPS_STALE_MS matches the Netlify Function's own cache window (see netlify/functions/sheet.js) -
+  // re-asking within that window costs nothing extra (the function serves it from its own cache
+  // instead of hitting Google again), so it's safe to treat the client-side copy as due for a
+  // refresh on roughly the same cadence, rather than only ever refetching once per browser session.
+  var OPS_STALE_MS = 90 * 1000;
   function ensureOpsLoaded(force){
-    if (opsLoading || (opsLoaded && !force)) return;
+    if (opsLoading) return;
+    // Treat a non-forced call as satisfied only while the last load is still within the stale
+    // window; once it ages past that, fall through and refetch even without an explicit force -
+    // this is what makes navigating back into Daily Ops Review pick up a just-arrived email's data
+    // without requiring a full page reload.
+    if (opsLoaded && !force && (Date.now() - opsLoadedAt) < OPS_STALE_MS) return;
     opsLoading = true;
     Promise.all(Object.keys(DOR_SRC).map(function(key){
       var spec = DOR_SRC[key];
       return fetchSheetRows(spec.sid, spec.tab)
         .then(function(rows){ data[key] = shape(rows, spec); stamps[key] = Date.now(); delete errors[key]; })
         .catch(function(e){ errors[key] = e || true; });
-    })).then(function(){ opsLoading = false; opsLoaded = true; schedule(); });
+    })).then(function(){ opsLoading = false; opsLoaded = true; opsLoadedAt = Date.now(); schedule(); });
   }
   async function connect(){
     if (!data.district) { state.gate = 'loading'; render(); }
