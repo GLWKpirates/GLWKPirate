@@ -812,11 +812,13 @@ body.theme-command::before{background:var(--bg)}
   function rtRowFor(title){
     if (isMock()) return mockOf().rt[title] || null;
     // RealTime_Data is one shared, company-wide table across every district now, Cincinnati included,
-    // so its single "Grand Total" row is the whole company's total - no district's own Overview page
-    // (not even Cincinnati's) can use it for a district-level scorecard; it would show the whole
-    // company's numbers under one district's name. Per-store rows are each store's own unique name,
-    // so those still resolve correctly for any district, Cincinnati's included.
-    if (title === 'Grand Total') return null;
+    // so its single "Grand Total" row is the whole company's total, not any one district's. A
+    // district's own Overview page asking for its "Grand Total" (i.e. its own scorecard total) gets
+    // that district's own totals instead, summed directly from its store rows (DOR_DISTRICT_STORES) -
+    // the same sum-the-raw-rows approach ccFloorByDistrict()/districtRtSums() already use, just
+    // reshaped into the same rt-row shape closeRates()/floorPanel() expect. Per-store rows are each
+    // store's own unique name, so those still resolve correctly for any district, Cincinnati's included.
+    if (title === 'Grand Total') return rtTotalsForStores(DOR_DISTRICT_STORES[state.district] || null);
     return rtRow(title, dkey('rt'));
   }
   function storesFor(){ return isMock() ? mockOf().stores : ((DISTRICT_TABS[state.district] && DISTRICT_TABS[state.district].stores) || STORES); }
@@ -1456,6 +1458,40 @@ body.theme-command::before{background:var(--bg)}
     });
     return have && sumT > 0 ? (sumA / sumT * 100) : NaN;
   }
+  // Builds an rt-shaped object (same key names RealTime_Data's header row uses, the ones closeRates()/
+  // floorPanel() already read) by summing RealTime_Data's raw store rows directly, instead of trusting
+  // a text match against a single "Grand Total" (or per-district total) row/title. Pass a store-name
+  // array to total just that district (DOR_DISTRICT_STORES[key]), or null/undefined to total every
+  // store company-wide. This is what Close rates/On the floor fall back to whenever the row-title
+  // lookup comes up empty, so a mismatched or missing total-row label can never zero out numbers that
+  // the raw per-store data clearly has.
+  function rtTotalsForStores(stores){
+    var rt = data.rt || [];
+    if (!rt.length) return null;
+    var header = (rt[0] || []).map(function(x){ return String(x).trim(); });
+    var rows = rt.slice(1).filter(function(r){
+      var loc = String((r && r[0]) || '').trim();
+      if (!loc || /^grand total$/i.test(loc)) return false;
+      return !stores || stores.indexOf(loc) !== -1;
+    });
+    function idx(name){ return header.indexOf(name); }
+    function sum(name){
+      var i = idx(name);
+      if (i < 0) return 0;
+      return rows.reduce(function(s, r){ var n = num(r[i]); return s + (isNaN(n) ? 0 : n); }, 0);
+    }
+    var opps = sum('Total Opps'), guests = sum('Guests'), ppv = sum('PPV'), ups = sum('Data'),
+        aiaSub = sum('AIA Submits'), rev = sum('Total Rev - Estimate'), accRev = sum('Acc Rev'), htp = sum('HTP');
+    return {
+      'Total Close Rate': ratio(opps, guests), 'Total Opps': String(opps), 'Guests': String(guests),
+      'PPV CR': ratio(ppv, guests), 'PPV': String(ppv),
+      'AIA Close Rate': ratio(aiaSub, guests), 'AIA Submits': String(aiaSub),
+      'UP CR': ratio(ups, guests), 'Data': String(ups),
+      'Total Rev - Estimate': '$' + rev.toFixed(2),
+      'Rev/Guest': guests > 0 ? '$' + (rev / guests).toFixed(2) : '$0.00',
+      'Acc Rev': '$' + accRev.toFixed(2), 'HTP': String(htp)
+    };
+  }
   // Sums RealTime_Data's own additive columns (Total Opps, Guests, revenue, PPV, Ups, AIA counts,
   // Acc Rev, HTP) across one district's own stores (DOR_DISTRICT_STORES - the same exact-name roster
   // already used to filter the Daily Ops Review report per district), then derives every ratio stat
@@ -1557,12 +1593,13 @@ body.theme-command::before{background:var(--bg)}
         '<div class="cc-pills">' + (pills || '<span class="cc-pill s-neutral">No KPI data yet</span>') + '</div></button>';
     }).join('');
 
-    // Unlike a single district's own Overview (which deliberately can't use RealTime_Data's shared
-    // "Grand Total" row - see rtRowFor() - the Command Center IS the whole company, so Grand Total is
-    // exactly right here. Same closeRates()/floorPanel() used everywhere else, so it inherits the same
-    // "always show zeroed cards instead of disappearing" behavior for free.
-    var marketRt = rtRow('Grand Total', 'rt');
-    try { console.log('[DEBUG rt]', 'data.rt rows=', (data.rt || []).length, 'last raw row=', (data.rt || [])[(data.rt || []).length - 1], 'marketRt=', marketRt); } catch (eDbg) {}
+    // The Command Center IS the whole company, so RealTime_Data's own "Grand Total" row is exactly
+    // right here - prefer it since it's the sheet's own reported total. But fall back to summing every
+    // store row directly (rtTotalsForStores(null)) whenever that row can't be found by its exact title
+    // text, so a renamed/retyped/differently-cased total-row label can never zero out numbers the raw
+    // per-store data clearly has. Same closeRates()/floorPanel() used everywhere else, so it inherits
+    // the same "always show zeroed cards instead of disappearing" behavior for free.
+    var marketRt = rtRow('Grand Total', 'rt') || rtTotalsForStores(null);
     var floorToggle = '<div class="seg" role="group" aria-label="Floor view" style="margin:22px 0 10px;max-width:320px">' +
       '<button type="button" data-ccfloor="market" aria-pressed="' + (state.ccFloorView !== 'district') + '">Market total</button>' +
       '<button type="button" data-ccfloor="district" aria-pressed="' + (state.ccFloorView === 'district') + '">By district</button></div>';
