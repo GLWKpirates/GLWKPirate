@@ -1562,6 +1562,7 @@ body.theme-command::before{background:var(--bg)}
     // exactly right here. Same closeRates()/floorPanel() used everywhere else, so it inherits the same
     // "always show zeroed cards instead of disappearing" behavior for free.
     var marketRt = rtRow('Grand Total', 'rt');
+    try { console.log('[DEBUG rt]', 'data.rt rows=', (data.rt || []).length, 'last raw row=', (data.rt || [])[(data.rt || []).length - 1], 'marketRt=', marketRt); } catch (eDbg) {}
     var floorToggle = '<div class="seg" role="group" aria-label="Floor view" style="margin:22px 0 10px;max-width:320px">' +
       '<button type="button" data-ccfloor="market" aria-pressed="' + (state.ccFloorView !== 'district') + '">Market total</button>' +
       '<button type="button" data-ccfloor="district" aria-pressed="' + (state.ccFloorView === 'district') + '">By district</button></div>';
