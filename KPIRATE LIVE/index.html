@@ -1182,10 +1182,10 @@ body.theme-command::before{background:var(--bg)}
     return checklistCellFn(rule.idCols);
   }
   function opsTableHtml(header, rows, cellFn){
-    var cols = header.length || Math.max.apply(null, rows.map(function(row){ return row.length; }));
+    var cols = (function(){ var m = rows.length ? Math.max.apply(null, rows.map(function(row){ return row.length; })) : 0; return Math.max(header.length, m); })();
     cellFn = cellFn || opsCell;
     return '<div class="opstable-wrap"><table class="opstable"><thead><tr>' +
-      header.map(function(h){ return '<th>' + esc(h) + '</th>'; }).join('') +
+      (function(){ var ths = []; for (var i = 0; i < cols; i++) ths.push('<th>' + esc(header[i]) + '</th>'); return ths.join(''); })() +
       '</tr></thead><tbody>' +
       rows.map(function(row){
         var cells = [];
