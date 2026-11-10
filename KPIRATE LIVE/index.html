@@ -1198,11 +1198,11 @@ body.theme-command::before{background:var(--bg)}
   // no District column of its own, just each employee's HomeStore. Found by scanning for whichever
   // row's first cell says "Employee" (its own header), then filtered by matching that HomeStore
   // against the current district's own store roster (DOR_DISTRICT_STORES) instead of a district match.
-  function opsEmployeeTable(raw, distKey){
+  var OPS_EMPLOYEE_HEADER_FALLBACK = ['Employee', 'HomeStore', 'Intangible', 'J-Line', 'Manual Discount', 'Prepaid Fee Discount', 'Wireless Credits - Invalid', 'Comp Offset Total']; function opsEmployeeTable(raw, distKey){
     var hi = -1;
     for (var i = 0; i < raw.length; i++) { if (/employee/i.test(String((raw[i] || [])[0] || ''))) { hi = i; break; } }
     if (hi < 0) return '';
-    var header = raw[hi], body = raw.slice(hi + 1);
+    var rawHeader = raw[hi], body = raw.slice(hi + 1); var header = OPS_EMPLOYEE_HEADER_FALLBACK.map(function(fallback, i){ var v = rawHeader[i]; return (v == null || String(v).trim() === '') ? fallback : v; });
     distKey = distKey || state.district;
     var rows = distKey === 'market' ? body : body.filter(function(r){
       var stores = DOR_DISTRICT_STORES[distKey] || [];
