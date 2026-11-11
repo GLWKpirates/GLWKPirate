@@ -1866,7 +1866,7 @@ body.theme-command::before{background:var(--bg)}
     document.body.classList.toggle('theme-command', state.district === 'control-center');
     if (!state.district) { app.innerHTML = viewLaunch(); return; }
     if (state.district === 'control-center') {
-      if (!state.ccUnlocked) { app.innerHTML = ccPasswordView(); return; }
+      if (!state.ccUnlocked) { app.innerHTML = ccPasswordView(); return; } Object.keys(LIVE_WIRED).forEach(function(dk){ ensureDistrictLoaded(dk); });
       var ccRoute = route().tab;
       var ccTab = (ccRoute === 'rankings' || ccRoute === 'needs' || ccRoute === 'crash-cart' || ccRoute === 'dailyops' || CC_PLACEHOLDER_TABS.indexOf(ccRoute) !== -1) ? ccRoute : 'overview';
       var ccBody = ccTab === 'rankings' ? viewCommandCenterRankings() : ccTab === 'needs' ? viewCommandCenterNeeds() :
