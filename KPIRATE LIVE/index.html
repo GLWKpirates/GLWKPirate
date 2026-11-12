@@ -854,8 +854,8 @@ body.theme-command::before{background:var(--bg)}
     var items = [
       { k: 'Total CR',   raw: 'Total Close Rate', num: 'Total Opps', den: 'Guests', unit: 'guests' },
       { k: 'PPV CR',     raw: 'PPV CR',           num: 'PPV',        den: 'Guests', unit: 'guests' },
-      { k: 'AIA CR',     raw: 'AIA Close Rate',   num: 'AIA Submits', den: 'Guests', unit: 'guests' },
-      { k: 'Upgrade CR', raw: 'UP CR',            num: 'Data',       den: 'Guests', unit: 'guests' }
+      { k: 'AIA CR',     raw: 'AIA Close Rate',   num: 'AIA Submits', den: 'AIA Green', unit: 'AIA Green' },
+      { k: 'Upgrade CR', raw: 'UP CR',            num: 'Ups',        den: 'Guests', unit: 'guests' }
     ].map(function(i){
       var rawV = String((rt && rt[i.raw]) == null ? '' : rt[i.raw]).trim();
       var n = fmt(rt && rt[i.num]) || '0', d = fmt(rt && rt[i.den]) || '0';
@@ -1492,13 +1492,13 @@ body.theme-command::before{background:var(--bg)}
       if (i < 0) return 0;
       return rows.reduce(function(s, r){ var n = num(r[i]); return s + (isNaN(n) ? 0 : n); }, 0);
     }
-    var opps = sum('Total Opps'), guests = sum('Guests'), ppv = sum('PPV'), ups = sum('Data'),
-        aiaSub = sum('AIA Submits'), rev = sum('Total Rev - Estimate'), accRev = sum('Acc Rev'), htp = sum('HTP');
+    var opps = sum('Total Opps'), guests = sum('Guests'), ppv = sum('PPV'), ups = sum('Ups'), dataCt = sum('Data'),
+        aiaSub = sum('AIA Submits'), aiaGreen = sum('AIA Green'), rev = sum('Total Rev - Estimate'), accRev = sum('Acc Rev'), htp = sum('HTP');
     return {
       'Total Close Rate': ratio(opps, guests), 'Total Opps': String(opps), 'Guests': String(guests),
       'PPV CR': ratio(ppv, guests), 'PPV': String(ppv),
-      'AIA Close Rate': ratio(aiaSub, guests), 'AIA Submits': String(aiaSub),
-      'UP CR': ratio(ups, guests), 'Data': String(ups),
+      'AIA Close Rate': ratio(aiaSub, aiaGreen), 'AIA Submits': String(aiaSub), 'AIA Green': String(aiaGreen),
+      'UP CR': ratio(ups, guests), 'Data': String(dataCt), 'Ups': String(ups),
       'Total Rev - Estimate': '$' + rev.toFixed(2),
       'Rev/Guest': guests > 0 ? '$' + (rev / guests).toFixed(2) : '$0.00',
       'Acc Rev': '$' + accRev.toFixed(2), 'HTP': String(htp)
@@ -1525,7 +1525,7 @@ body.theme-command::before{background:var(--bg)}
     }
     return {
       opps: sum('Total Opps'), guests: sum('Guests'), rev: sum('Total Rev - Estimate'),
-      ppv: sum('PPV'), data: sum('Data'), aiaSub: sum('AIA Submits'),
+      ppv: sum('PPV'), data: sum('Data'), ups: sum('Ups'), aiaSub: sum('AIA Submits'), aiaGreen: sum('AIA Green'),
       accRev: sum('Acc Rev'), htp: sum('HTP'), have: rows.length > 0
     };
   }
@@ -1541,11 +1541,11 @@ body.theme-command::before{background:var(--bg)}
         d.name,
         ratio(s.opps, s.guests) || '0%',
         ratio(s.ppv, s.guests) || '0%',
-        ratio(s.aiaSub, s.guests) || '0%',
+        ratio(s.aiaSub, s.aiaGreen) || '0%',
         String(s.opps), String(s.guests),
         '$' + s.rev.toFixed(2),
         s.guests > 0 ? '$' + (s.rev / s.guests).toFixed(2) : '$0.00',
-        ratio(s.data, s.guests) || '0%',
+        ratio(s.ups, s.guests) || '0%',
         '$' + s.accRev.toFixed(2),
         String(s.htp)
       ];
