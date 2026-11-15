@@ -1021,7 +1021,7 @@ body.theme-command::before{background:var(--bg)}
     if (isNaN(n)) return esc(s);
     return (n * 100).toFixed(1) + '%';
   }
-  function parseCEScore(v){
+  var CESC_HEADER_FALLBACK = ['Name', 'Current Home Store', 'Month', 'Summit Scorecard', 'New Voice % to Goal', 'New Voice Points', '% to Data/Upgrade Goal', 'Data/Up Points', '% to Acc Goal', 'Acc Points', '% to Internet to Goal', '% to Internet Submitted Goal', 'Internet Points', '% to CRU/FN Goal', 'CRU/FN Points', 'Quality ( Personal )', 'Quality  Points', 'Quality ( Location )']; function parseCEScore(v){
     if (!v || v.length < 2) return [];
     var header = v[0], out = [];
     for (var i = 1; i < v.length; i++) {
@@ -1031,8 +1031,8 @@ body.theme-command::before{background:var(--bg)}
       if (name.toUpperCase() === 'X') continue;   // no longer with the company
       var store = String(r[1] || '').trim();
       var stats = [];
-      for (var c = 3; c < header.length; c++) {
-        var label = String(header[c] || '').replace(/\s+/g, ' ').trim();
+      for (var c = 3, ncol = Math.max(header.length, CESC_HEADER_FALLBACK.length); c < ncol; c++) {
+        var label = String(header[c] || CESC_HEADER_FALLBACK[c] || '').replace(/\s+/g, ' ').trim();
         if (!label) continue;
         stats.push({ label: label, raw: r[c] });
       }
