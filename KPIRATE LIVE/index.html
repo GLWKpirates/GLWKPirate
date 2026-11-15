@@ -1028,7 +1028,7 @@ body.theme-command::before{background:var(--bg)}
       var r = v[i] || [];
       var name = String(r[0] || '').trim();
       if (!name) continue;
-      if (name.toUpperCase() === 'X') continue;   // no longer with the company
+      if (name.toUpperCase() === 'X') continue; name = NICKNAMES[name] || name;   // no longer with the company
       var store = String(r[1] || '').trim();
       var stats = [];
       for (var c = 3, ncol = Math.max(header.length, CESC_HEADER_FALLBACK.length); c < ncol; c++) {
