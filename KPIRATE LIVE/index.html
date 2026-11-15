@@ -706,7 +706,7 @@ body.theme-command::before{background:var(--bg)}
   /* ---------- parsers ---------- */
   // Display-name overrides: the workbook keeps a manager's full/legal name, but the app shows
   // whatever name they actually go by. Keyed by the exact text the sheet's "Manager:" line has.
-  var NICKNAMES = { 'William Howell': 'Mike Howell' };
+  var NICKNAMES = { 'William Howell': 'Mike Howell', 'Joycelynn Spicer': 'Jay Spicer' };
   function parseCard(v){
     if (!v) return null;
     var cell = function(r, c){ return v[r] && v[r][c] != null ? String(v[r][c]) : ''; };
